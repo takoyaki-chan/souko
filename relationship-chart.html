@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🤼‍♀️ キャラクター相関図 — 学園女子プロレス</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.9/babel.min.js"></script>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { width: 100%; height: 100%; overflow: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useRef, useEffect, useCallback } = React;
+
+const CHARACTERS = [
+  { id: "tachibana", name: "橘玲美", school: "哲玖国際高校", age: 17, height: 171, influence: 4, stats: { spd: 73, tec: 89, pow: 71, men: 74 }, desc: "関節技・絞め技が得意なヒールコンビの頭脳。寡黙だが嗜虐的。", color: "#00e5ff" },
+  { id: "ikoma", name: "生駒エリカ", school: "哲玖国際高校", age: 17, height: 153, influence: 3, stats: { spd: 71, tec: 55, pow: 78, men: 82 }, desc: "小柄ながら圧倒的パワーの帰国子女。乱暴なファイトスタイル。", color: "#00e5ff" },
+  { id: "kusunoki", name: "楠木なぎさ", school: "哲玖国際高校", age: 17, height: 178, influence: 2, stats: { spd: 65, tec: 21, pow: 79, men: 62 }, desc: "哲玖一のパワーを誇る陽気な重戦車。タックルが得意。", color: "#00e5ff" },
+  { id: "abukuma", name: "阿武隈塔子", school: "粕田学園高校", age: 17, height: 173, influence: 5, stats: { spd: 73, tec: 71, pow: 93, men: 80 }, desc: "市内最強と評された初代チャンピオン。右ヒザ負傷で引退。", color: "#ff6b35" },
+  { id: "fukuzawa", name: "副沢たまき", school: "粕田学園高校", age: 17, height: 161, influence: 2, stats: { spd: 68, tec: 74, pow: 71, men: 68 }, desc: "楽をする事を好む八百屋の娘。生駒の元親友。", color: "#ff6b35" },
+  { id: "takatsu", name: "高津小春", school: "粕田学園高校", age: 17, height: 161, influence: 2, stats: { spd: 75, tec: 39, pow: 73, men: 83 }, desc: "全国レベルの剣道家。懲りずに強敵に挑み続ける。", color: "#ff6b35" },
+  { id: "okouchi", name: "大河内紗代子", school: "摺出川女学院", age: 17, height: 164, influence: 5, stats: { spd: 68, tec: 63, pow: 91, men: 77 }, desc: "名家の令嬢にして摺出川の支配者。圧倒的パワーで君臨。", color: "#e040fb" },
+  { id: "shijo", name: "四条あずさ", school: "摺出川女学院", age: 16, height: 163, influence: 2, stats: { spd: 68, tec: 62, pow: 64, men: 62 }, desc: "大河内に心酔するお嬢様。一般入学の忠臣。", color: "#e040fb" },
+  { id: "kinouchi", name: "木ノ内幸音", school: "摺出川女学院", age: 16, height: 164, influence: 1, stats: { spd: 53, tec: 53, pow: 66, men: 67 }, desc: "橘に憧れてヒールを目指す天然娘。声がでかい。", color: "#e040fb" },
+];
+
+const RELATIONSHIPS = [
+  { from: "tachibana", to: "ikoma", type: "相棒", strength: 5, color: "#ffd600", desc: "上級生との共闘で絆が生まれた最強タッグ", fromView: "信頼できる相棒", toView: "唯一認めた戦友" },
+  { from: "ikoma", to: "fukuzawa", type: "因縁", strength: 4, color: "#ff5252", desc: "中学時代の親友→プロレスで関係が険悪に", fromView: "かつての親友…今は敵", toView: "裏切られた怒り" },
+  { from: "kusunoki", to: "tachibana", type: "崇拝", strength: 4, color: "#69f0ae", desc: "上級生抗争での活躍を見て以来の大ファン", fromView: "大好きなリーダー！", toView: "頼もしい仲間" },
+  { from: "kusunoki", to: "ikoma", type: "崇拝", strength: 4, color: "#69f0ae", desc: "橘とともにリーダーとして立てている", fromView: "大好きなリーダー！", toView: "可愛い後輩" },
+  { from: "okouchi", to: "tachibana", type: "敵対", strength: 5, color: "#ff1744", desc: "タッグサバイバルで大河内・出羽組が勝利", fromView: "潰すべき相手", toView: "危険な敵" },
+  { from: "okouchi", to: "abukuma", type: "敵対", strength: 5, color: "#ff1744", desc: "タッグサバイバルで右ヒザを破壊し引退に追い込んだ", fromView: "排除完了", toView: "許せない相手" },
+  { from: "shijo", to: "okouchi", type: "心酔", strength: 4, color: "#ea80fc", desc: "容姿も気品も力づくのやり口も全てに惹かれている", fromView: "紗代子様に全てを", toView: "使える駒" },
+  { from: "kinouchi", to: "tachibana", type: "憧れ", strength: 3, color: "#b388ff", desc: "橘に憧れてヒールを目指し始めた", fromView: "憧れの玲美先輩！", toView: "…うるさい子" },
+  { from: "abukuma", to: "takatsu", type: "同校", strength: 2, color: "#78909c", desc: "粕田学園の仲間", fromView: "頑張り屋の後輩", toView: "尊敬する先輩" },
+  { from: "fukuzawa", to: "takatsu", type: "同校", strength: 2, color: "#78909c", desc: "粕田学園のクラスメイト", fromView: "いつもの仲間", toView: "気楽な友達" },
+];
+
+const SCHOOL_COLORS = {
+  "哲玖国際高校": { bg: "rgba(0,229,255,0.08)", border: "#00e5ff", text: "#00e5ff", glow: "0 0 20px rgba(0,229,255,0.3)" },
+  "粕田学園高校": { bg: "rgba(255,107,53,0.08)", border: "#ff6b35", text: "#ff6b35", glow: "0 0 20px rgba(255,107,53,0.3)" },
+  "摺出川女学院": { bg: "rgba(224,64,251,0.08)", border: "#e040fb", text: "#e040fb", glow: "0 0 20px rgba(224,64,251,0.3)" },
+};
+
+const TYPE_LABELS = {
+  "相棒": { icon: "🤝", color: "#ffd600" },
+  "因縁": { icon: "⚡", color: "#ff5252" },
+  "崇拝": { icon: "✨", color: "#69f0ae" },
+  "敵対": { icon: "🔥", color: "#ff1744" },
+  "心酔": { icon: "💜", color: "#ea80fc" },
+  "憧れ": { icon: "⭐", color: "#b388ff" },
+  "同校": { icon: "🏫", color: "#78909c" },
+};
+
+function StatBar({ label, value, max = 100, color }) {
+  return (
+    React.createElement("div", { style: { display: "flex", alignItems: "center", gap: 6, marginBottom: 3 } },
+      React.createElement("span", { style: { width: 28, fontSize: 10, color: "#8892a4", fontFamily: "'JetBrains Mono', monospace" } }, label),
+      React.createElement("div", { style: { flex: 1, height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2 } },
+        React.createElement("div", { style: { width: `${(value / max) * 100}%`, height: "100%", background: `linear-gradient(90deg, ${color}, ${color}88)`, borderRadius: 2, transition: "width 0.6s cubic-bezier(0.22,1,0.36,1)" } })
+      ),
+      React.createElement("span", { style: { width: 22, fontSize: 10, color: "#8892a4", textAlign: "right", fontFamily: "'JetBrains Mono', monospace" } }, value)
+    )
+  );
+}
+
+function CharNode({ char, x, y, isSelected, isHighlighted, dimmed, onSelect, onHover, onLeave }) {
+  const school = SCHOOL_COLORS[char.school];
+  const size = 28 + char.influence * 5;
+  const nameLen = char.name.length;
+
+  return (
+    <g
+      transform={`translate(${x}, ${y})`}
+      onClick={() => onSelect(char.id)}
+      onMouseEnter={() => onHover(char.id)}
+      onMouseLeave={onLeave}
+      style={{ cursor: "pointer" }}
+    >
+      <circle
+        r={size + 8}
+        fill="transparent"
+        stroke={isSelected ? school.border : "transparent"}
+        strokeWidth={2}
+        strokeDasharray={isSelected ? "none" : "4 4"}
+        opacity={dimmed ? 0.15 : 0.6}
+        style={{ transition: "all 0.3s ease" }}
+      />
+      <circle
+        r={size}
+        fill={school.bg}
+        stroke={school.border}
+        strokeWidth={isSelected ? 2.5 : isHighlighted ? 2 : 1}
+        opacity={dimmed ? 0.15 : 1}
+        style={{
+          transition: "all 0.3s ease",
+          filter: isSelected ? `drop-shadow(${school.glow})` : "none",
+        }}
+      />
+      <text
+        textAnchor="middle"
+        dy="0.35em"
+        fill={dimmed ? "#333" : school.text}
+        fontSize={nameLen > 5 ? 11 : 13}
+        fontWeight="700"
+        fontFamily="'Noto Sans JP', sans-serif"
+        style={{ transition: "fill 0.3s ease", pointerEvents: "none" }}
+      >
+        {char.name}
+      </text>
+      <text
+        textAnchor="middle"
+        dy={size + 16}
+        fill={dimmed ? "#222" : "#556"}
+        fontSize={9}
+        fontFamily="'Noto Sans JP', sans-serif"
+        style={{ transition: "fill 0.3s ease", pointerEvents: "none" }}
+      >
+        {char.school}
+      </text>
+    </g>
+  );
+}
+
+function RelLine({ x1, y1, x2, y2, rel, isHighlighted, dimmed }) {
+  const midX = (x1 + x2) / 2;
+  const midY = (y1 + y2) / 2;
+
+  return (
+    <g>
+      <line
+        x1={x1} y1={y1} x2={x2} y2={y2}
+        stroke={rel.color}
+        strokeWidth={isHighlighted ? 2.5 : 1.2}
+        opacity={dimmed ? 0.04 : isHighlighted ? 0.9 : 0.25}
+        strokeDasharray={rel.type === "同校" ? "6 4" : "none"}
+        style={{ transition: "all 0.3s ease" }}
+      />
+      {isHighlighted && (
+        <g transform={`translate(${midX}, ${midY})`}>
+          <rect x={-24} y={-10} width={48} height={20} rx={10} fill="#0d1117" stroke={rel.color} strokeWidth={1} opacity={0.95} />
+          <text textAnchor="middle" dy="0.35em" fill={rel.color} fontSize={10} fontWeight="600" fontFamily="'Noto Sans JP', sans-serif">
+            {rel.type}
+          </text>
+        </g>
+      )}
+    </g>
+  );
+}
+
+function DetailPanel({ char, relations, onClose }) {
+  const school = SCHOOL_COLORS[char.school];
+  const stars = "★".repeat(char.influence) + "☆".repeat(5 - char.influence);
+
+  return (
+    <div style={{
+      position: "absolute", top: 16, right: 16, width: 300,
+      background: "linear-gradient(170deg, #0d1117 0%, #111820 100%)",
+      border: `1px solid ${school.border}44`,
+      borderRadius: 12, padding: 20,
+      boxShadow: `0 8px 32px rgba(0,0,0,0.6), inset 0 1px 0 ${school.border}22`,
+      zIndex: 10,
+      animation: "slideIn 0.3s cubic-bezier(0.22,1,0.36,1)",
+    }}>
+      <button onClick={onClose} style={{
+        position: "absolute", top: 10, right: 12,
+        background: "none", border: "none", color: "#556", fontSize: 18, cursor: "pointer",
+      }}>✕</button>
+
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12 }}>
+        <div style={{
+          width: 44, height: 44, borderRadius: "50%",
+          background: school.bg, border: `2px solid ${school.border}`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 18, fontWeight: 800, color: school.text,
+          fontFamily: "'Noto Sans JP', sans-serif",
+        }}>
+          {char.name[0]}
+        </div>
+        <div>
+          <div style={{ color: "#e6edf3", fontSize: 18, fontWeight: 800, fontFamily: "'Noto Sans JP', sans-serif" }}>{char.name}</div>
+          <div style={{ color: school.text, fontSize: 11, fontWeight: 500 }}>{char.school}</div>
+        </div>
+      </div>
+
+      <div style={{ display: "flex", gap: 16, marginBottom: 14, fontSize: 11, color: "#8892a4" }}>
+        <span>{char.age}歳</span>
+        <span>{char.height}cm</span>
+        <span style={{ color: "#ffd600" }}>{stars}</span>
+      </div>
+
+      <div style={{ marginBottom: 14 }}>
+        <StatBar label="SPD" value={char.stats.spd} color="#00e5ff" />
+        <StatBar label="TEC" value={char.stats.tec} color="#69f0ae" />
+        <StatBar label="POW" value={char.stats.pow} color="#ff6b35" />
+        <StatBar label="MEN" value={char.stats.men} color="#ffd600" />
+      </div>
+
+      <p style={{ fontSize: 11, color: "#8892a4", lineHeight: 1.7, margin: "0 0 16px", fontFamily: "'Noto Sans JP', sans-serif" }}>{char.desc}</p>
+
+      {relations.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, color: "#556", marginBottom: 8, letterSpacing: 2, textTransform: "uppercase" }}>RELATIONSHIPS</div>
+          {relations.map((r, i) => {
+            const isFrom = r.from === char.id;
+            const otherChar = CHARACTERS.find(c => c.id === (isFrom ? r.to : r.from));
+            const typeInfo = TYPE_LABELS[r.type] || { icon: "•", color: "#888" };
+            return (
+              <div key={i} style={{
+                padding: "8px 10px", marginBottom: 6,
+                background: "rgba(255,255,255,0.02)",
+                borderRadius: 8,
+                borderLeft: `3px solid ${r.color}`,
+              }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 4 }}>
+                  <span style={{ fontSize: 12 }}>{typeInfo.icon}</span>
+                  <span style={{ fontSize: 12, color: r.color, fontWeight: 700, fontFamily: "'Noto Sans JP', sans-serif" }}>{r.type}</span>
+                  <span style={{ fontSize: 11, color: "#8892a4" }}>→</span>
+                  <span style={{ fontSize: 12, color: "#c9d1d9", fontWeight: 600, fontFamily: "'Noto Sans JP', sans-serif" }}>{otherChar?.name}</span>
+                </div>
+                <div style={{ fontSize: 10, color: "#6e7681", lineHeight: 1.5, fontFamily: "'Noto Sans JP', sans-serif" }}>
+                  {isFrom ? r.fromView : r.toView}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function SchoolLegend() {
+  return (
+    <div style={{
+      position: "absolute", bottom: 16, left: 16,
+      display: "flex", gap: 16, padding: "10px 16px",
+      background: "rgba(13,17,23,0.85)", borderRadius: 8,
+      border: "1px solid rgba(255,255,255,0.06)",
+      backdropFilter: "blur(8px)",
+    }}>
+      {Object.entries(SCHOOL_COLORS).map(([name, s]) => (
+        <div key={name} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{ width: 10, height: 10, borderRadius: "50%", background: s.border, boxShadow: s.glow }} />
+          <span style={{ fontSize: 11, color: s.text, fontWeight: 600, fontFamily: "'Noto Sans JP', sans-serif" }}>{name}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function useForceLayout(characters, relationships, width, height) {
+  const [positions, setPositions] = useState(() => {
+    const schoolGroups = {};
+    characters.forEach(c => {
+      if (!schoolGroups[c.school]) schoolGroups[c.school] = [];
+      schoolGroups[c.school].push(c.id);
+    });
+
+    const schoolCenters = {
+      "哲玖国際高校": { x: width * 0.25, y: height * 0.35 },
+      "粕田学園高校": { x: width * 0.7, y: height * 0.3 },
+      "摺出川女学院": { x: width * 0.45, y: height * 0.7 },
+    };
+
+    const pos = {};
+    characters.forEach(c => {
+      const center = schoolCenters[c.school] || { x: width / 2, y: height / 2 };
+      const idx = schoolGroups[c.school].indexOf(c.id);
+      const angle = (idx / schoolGroups[c.school].length) * Math.PI * 2 - Math.PI / 2;
+      const radius = 70 + (schoolGroups[c.school].length > 2 ? 20 : 0);
+      pos[c.id] = {
+        x: center.x + Math.cos(angle) * radius + (Math.random() - 0.5) * 20,
+        y: center.y + Math.sin(angle) * radius + (Math.random() - 0.5) * 20,
+      };
+    });
+    return pos;
+  });
+
+  useEffect(() => {
+    let frame;
+    const pos = {};
+    Object.keys(positions).forEach(k => { pos[k] = { ...positions[k] }; });
+    const vel = {};
+    characters.forEach(c => { vel[c.id] = { x: 0, y: 0 }; });
+
+    let iter = 0;
+    const maxIter = 200;
+
+    function step() {
+      if (iter >= maxIter) return;
+      iter++;
+
+      characters.forEach(c => { vel[c.id] = { x: 0, y: 0 }; });
+
+      for (let i = 0; i < characters.length; i++) {
+        for (let j = i + 1; j < characters.length; j++) {
+          const a = characters[i].id;
+          const b = characters[j].id;
+          const dx = pos[a].x - pos[b].x;
+          const dy = pos[a].y - pos[b].y;
+          const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+          const force = 3000 / (dist * dist);
+          const fx = (dx / dist) * force;
+          const fy = (dy / dist) * force;
+          vel[a].x += fx; vel[a].y += fy;
+          vel[b].x -= fx; vel[b].y -= fy;
+        }
+      }
+
+      relationships.forEach(r => {
+        const dx = pos[r.to].x - pos[r.from].x;
+        const dy = pos[r.to].y - pos[r.from].y;
+        const dist = Math.max(Math.sqrt(dx * dx + dy * dy), 1);
+        const idealDist = r.type === "同校" ? 100 : 180;
+        const force = (dist - idealDist) * 0.008;
+        const fx = (dx / dist) * force;
+        const fy = (dy / dist) * force;
+        vel[r.from].x += fx; vel[r.from].y += fy;
+        vel[r.to].x -= fx; vel[r.to].y -= fy;
+      });
+
+      const schoolCenters = {
+        "哲玖国際高校": { x: width * 0.25, y: height * 0.35 },
+        "粕田学園高校": { x: width * 0.72, y: height * 0.3 },
+        "摺出川女学院": { x: width * 0.45, y: height * 0.72 },
+      };
+
+      characters.forEach(c => {
+        const center = schoolCenters[c.school];
+        if (center) {
+          vel[c.id].x += (center.x - pos[c.id].x) * 0.005;
+          vel[c.id].y += (center.y - pos[c.id].y) * 0.005;
+        }
+      });
+
+      const damping = 0.85 - (iter / maxIter) * 0.4;
+      characters.forEach(c => {
+        pos[c.id].x += vel[c.id].x * damping;
+        pos[c.id].y += vel[c.id].y * damping;
+        pos[c.id].x = Math.max(60, Math.min(width - 60, pos[c.id].x));
+        pos[c.id].y = Math.max(60, Math.min(height - 60, pos[c.id].y));
+      });
+
+      if (iter % 5 === 0 || iter === maxIter - 1) {
+        const snapshot = {};
+        Object.keys(pos).forEach(k => { snapshot[k] = { ...pos[k] }; });
+        setPositions(snapshot);
+      }
+
+      frame = requestAnimationFrame(step);
+    }
+
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
+  }, [width, height]);
+
+  return positions;
+}
+
+function RelationshipChart() {
+  const [selected, setSelected] = useState(null);
+  const [hovered, setHovered] = useState(null);
+  const [filterSchool, setFilterSchool] = useState(null);
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ w: 800, h: 600 });
+
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    const update = () => {
+      setDims({ w: el.clientWidth, h: el.clientHeight });
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const positions = useForceLayout(CHARACTERS, RELATIONSHIPS, dims.w, dims.h);
+
+  const activeId = selected || hovered;
+  const connectedIds = activeId
+    ? new Set(
+        RELATIONSHIPS
+          .filter(r => r.from === activeId || r.to === activeId)
+          .flatMap(r => [r.from, r.to])
+      )
+    : null;
+
+  const selectedChar = selected ? CHARACTERS.find(c => c.id === selected) : null;
+  const selectedRels = selected
+    ? RELATIONSHIPS.filter(r => r.from === selected || r.to === selected)
+    : [];
+
+  return (
+    <div style={{
+      width: "100%", height: "100vh",
+      background: "radial-gradient(ellipse at 30% 20%, #0d1117 0%, #010409 70%)",
+      position: "relative", overflow: "hidden",
+      fontFamily: "'Noto Sans JP', -apple-system, sans-serif",
+    }}>
+      <style>{`@keyframes slideIn { from { opacity:0; transform: translateX(20px); } to { opacity:1; transform: translateX(0); } }`}</style>
+
+      {/* Background grid */}
+      <svg style={{ position: "absolute", inset: 0, opacity: 0.04, pointerEvents: "none" }} width="100%" height="100%">
+        <defs>
+          <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#fff" strokeWidth="0.5" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#grid)" />
+      </svg>
+
+      {/* Title */}
+      <div style={{ position: "absolute", top: 16, left: 20, zIndex: 5 }}>
+        <h1 style={{ margin: 0, fontSize: 22, fontWeight: 800, color: "#e6edf3", letterSpacing: -0.5 }}>
+          <span style={{ color: "#ff6b35" }}>🤼‍♀️</span> キャラクター相関図
+        </h1>
+        <p style={{ margin: "4px 0 0", fontSize: 11, color: "#484f58" }}>
+          学園女子プロレス — キャラをクリックで詳細表示
+        </p>
+      </div>
+
+      {/* Filter buttons */}
+      <div style={{
+        position: "absolute", top: 16, left: "50%", transform: "translateX(-50%)",
+        display: "flex", gap: 6, zIndex: 5,
+      }}>
+        <button
+          onClick={() => setFilterSchool(null)}
+          style={{
+            padding: "5px 12px", borderRadius: 6, border: "1px solid",
+            borderColor: !filterSchool ? "#e6edf3" : "rgba(255,255,255,0.1)",
+            background: !filterSchool ? "rgba(255,255,255,0.08)" : "rgba(13,17,23,0.8)",
+            color: !filterSchool ? "#e6edf3" : "#484f58",
+            fontSize: 11, fontWeight: 600, cursor: "pointer",
+            fontFamily: "'Noto Sans JP', sans-serif",
+          }}
+        >ALL</button>
+        {Object.entries(SCHOOL_COLORS).map(([name, s]) => (
+          <button
+            key={name}
+            onClick={() => setFilterSchool(filterSchool === name ? null : name)}
+            style={{
+              padding: "5px 12px", borderRadius: 6, border: "1px solid",
+              borderColor: filterSchool === name ? s.border : "rgba(255,255,255,0.1)",
+              background: filterSchool === name ? s.bg : "rgba(13,17,23,0.8)",
+              color: filterSchool === name ? s.text : "#484f58",
+              fontSize: 11, fontWeight: 600, cursor: "pointer",
+              fontFamily: "'Noto Sans JP', sans-serif",
+              transition: "all 0.2s ease",
+            }}
+          >{name}</button>
+        ))}
+      </div>
+
+      {/* Main SVG */}
+      <div ref={containerRef} style={{ width: "100%", height: "100%", position: "relative" }}>
+        <svg width={dims.w} height={dims.h} style={{ display: "block" }}>
+          {RELATIONSHIPS.map((rel, i) => {
+            const fromPos = positions[rel.from];
+            const toPos = positions[rel.to];
+            if (!fromPos || !toPos) return null;
+
+            const fromChar = CHARACTERS.find(c => c.id === rel.from);
+            const toChar = CHARACTERS.find(c => c.id === rel.to);
+            const schoolFiltered = filterSchool && fromChar.school !== filterSchool && toChar.school !== filterSchool;
+            const isHighlighted = activeId && (rel.from === activeId || rel.to === activeId);
+            const dimmed = schoolFiltered || (activeId && !isHighlighted);
+
+            return (
+              <RelLine
+                key={i}
+                x1={fromPos.x} y1={fromPos.y}
+                x2={toPos.x} y2={toPos.y}
+                rel={rel}
+                isHighlighted={isHighlighted}
+                dimmed={dimmed}
+              />
+            );
+          })}
+
+          {CHARACTERS.map(char => {
+            const pos = positions[char.id];
+            if (!pos) return null;
+
+            const schoolFiltered = filterSchool && char.school !== filterSchool;
+            const isHighlighted = connectedIds?.has(char.id) || false;
+            const dimmed = schoolFiltered || (activeId && !isHighlighted && activeId !== char.id);
+
+            return (
+              <CharNode
+                key={char.id}
+                char={char}
+                x={pos.x} y={pos.y}
+                isSelected={selected === char.id}
+                isHighlighted={isHighlighted}
+                dimmed={dimmed}
+                onSelect={setSelected}
+                onHover={setHovered}
+                onLeave={() => setHovered(null)}
+              />
+            );
+          })}
+        </svg>
+      </div>
+
+      {selectedChar && (
+        <DetailPanel
+          char={selectedChar}
+          relations={selectedRels}
+          onClose={() => setSelected(null)}
+        />
+      )}
+
+      <SchoolLegend />
+
+      {/* Relationship type legend */}
+      <div style={{
+        position: "absolute", bottom: 16, right: 16,
+        display: "flex", flexWrap: "wrap", gap: 8, padding: "10px 14px",
+        background: "rgba(13,17,23,0.85)", borderRadius: 8,
+        border: "1px solid rgba(255,255,255,0.06)",
+        backdropFilter: "blur(8px)", maxWidth: 300,
+      }}>
+        {Object.entries(TYPE_LABELS).map(([name, info]) => (
+          <div key={name} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <span style={{ fontSize: 10 }}>{info.icon}</span>
+            <span style={{ fontSize: 10, color: info.color, fontWeight: 600, fontFamily: "'Noto Sans JP', sans-serif" }}>{name}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<RelationshipChart />);
+</script>
+</body>
+</html>
