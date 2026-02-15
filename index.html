@@ -738,6 +738,63 @@ function preloadCloseups() {
 document.addEventListener('DOMContentLoaded', preloadCloseups);
 /* ===== /Portrait toggle ===== */
 
+/* ===== Fight link sound ===== */
+function playPaan() {
+  initAudio();
+  if (!actx) return;
+  const t = actx.currentTime;
+
+  // Layer 1: 上昇スイープ（シュイン！）
+  const sw = actx.createOscillator();
+  const swG = actx.createGain();
+  sw.type = 'sine';
+  sw.frequency.setValueAtTime(400, t);
+  sw.frequency.exponentialRampToValueAtTime(2400, t + 0.12);
+  swG.gain.setValueAtTime(0.2, t);
+  swG.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  sw.connect(swG); swG.connect(actx.destination);
+  sw.start(t); sw.stop(t + 0.2);
+
+  // Layer 2: キラッと光る和音（ピキーン）
+  [880, 1108.73, 1318.51, 1760].forEach((f, i) => {
+    const o = actx.createOscillator();
+    const g = actx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(f, t + 0.06);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.12, t + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+    o.connect(g); g.connect(actx.destination);
+    o.start(t + 0.06); o.stop(t + 0.5);
+  });
+
+  // Layer 3: パンチの芯（低音アタック）
+  const kick = actx.createOscillator();
+  const kickG = actx.createGain();
+  kick.type = 'sine';
+  kick.frequency.setValueAtTime(300, t + 0.05);
+  kick.frequency.exponentialRampToValueAtTime(60, t + 0.15);
+  kickG.gain.setValueAtTime(0.3, t + 0.05);
+  kickG.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
+  kick.connect(kickG); kickG.connect(actx.destination);
+  kick.start(t + 0.05); kick.stop(t + 0.2);
+
+  // Layer 4: 軽いリバーブ風の余韻
+  const rev = actx.createOscillator();
+  const revG = actx.createGain();
+  rev.type = 'triangle';
+  rev.frequency.setValueAtTime(1760, t + 0.1);
+  rev.frequency.exponentialRampToValueAtTime(880, t + 0.6);
+  revG.gain.setValueAtTime(0.06, t + 0.1);
+  revG.gain.exponentialRampToValueAtTime(0.001, t + 0.6);
+  rev.connect(revG); revG.connect(actx.destination);
+  rev.start(t + 0.1); rev.stop(t + 0.6);
+}
+
+document.querySelector('.footer-link')?.addEventListener('click', function() {
+  playPaan();
+});
+
 </script>
 </body>
 </html>
