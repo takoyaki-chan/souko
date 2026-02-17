@@ -1,0 +1,1022 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>キャラクターロースター | 団地プロレス</title>
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700;900&family=Oswald:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+  --red: #c41e3a; --red-dark: #8b1528;
+  --blue: #1a3a6b; --blue-dark: #0d1f3c;
+  --gold: #d4a843; --gold-light: #f0d078;
+  --bg-dark: #08080d;
+  --card-bg: #0e0e15;
+}
+body {
+  background: var(--bg-dark);
+  font-family: 'Noto Sans JP', sans-serif;
+  color: #fff;
+  min-height: 100vh;
+  padding: 20px;
+  background-image:
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(196,30,58,0.05) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 100%, rgba(26,58,107,0.04) 0%, transparent 50%);
+}
+
+/* ── HEADER ── */
+.site-header {
+  max-width: 1400px;
+  margin: 0 auto 30px;
+  text-align: center;
+  padding: 40px 20px 28px;
+}
+.site-header::after {
+  content: '';
+  display: block;
+  width: 100px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+  margin: 22px auto 0;
+}
+.site-title {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  letter-spacing: 10px;
+  background: linear-gradient(180deg, #fff 20%, var(--gold-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-bottom: 10px;
+}
+.site-subtitle {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px;
+  letter-spacing: 6px;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.5;
+}
+.site-tagline {
+  margin-top: 12px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.3);
+  letter-spacing: 1px;
+}
+.site-tagline em { font-style: normal; color: var(--gold); opacity: 0.6; }
+
+/* ── FILTERS ── */
+.filter-bar {
+  max-width: 1400px;
+  margin: 0 auto 30px;
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+.filter-btn {
+  font-family: 'Oswald', sans-serif;
+  font-size: 11px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  padding: 8px 20px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border-radius: 2px;
+}
+.filter-btn:hover {
+  background: rgba(212,168,67,0.1);
+  border-color: var(--gold);
+  color: var(--gold);
+}
+.filter-btn.active {
+  background: var(--gold);
+  border-color: var(--gold);
+  color: var(--bg-dark);
+  font-weight: 700;
+}
+
+/* ── GRID ── */
+.roster-grid {
+  max-width: 1400px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+
+/* ── CARD ── */
+.char-card {
+  background: var(--card-bg);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.4s ease;
+  position: relative;
+  opacity: 0;
+  transform: translateY(20px);
+  animation: cardAppear 0.5s ease forwards;
+}
+@keyframes cardAppear { to { opacity: 1; transform: translateY(0); } }
+
+/* Rarity borders */
+.char-card.rarity-5 {
+  border-color: rgba(212,168,67,0.5);
+  box-shadow: 0 0 12px rgba(212,168,67,0.15), inset 0 0 8px rgba(212,168,67,0.05);
+}
+.char-card.rarity-5::before {
+  background: linear-gradient(90deg, transparent, #f0d078 30%, #d4a843 50%, #f0d078 70%, transparent);
+  opacity: 0.7;
+  height: 2px;
+}
+.char-card.rarity-5:hover {
+  border-color: rgba(240,208,120,0.6);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 60px rgba(212,168,67,0.2), inset 0 0 12px rgba(212,168,67,0.06);
+}
+.char-card.rarity-4 {
+  border-color: rgba(180,190,210,0.4);
+  box-shadow: 0 0 10px rgba(180,190,210,0.1), inset 0 0 6px rgba(180,190,210,0.04);
+}
+.char-card.rarity-4::before {
+  background: linear-gradient(90deg, transparent, #c0c8d8 30%, #a0aabe 50%, #c0c8d8 70%, transparent);
+  opacity: 0.6;
+  height: 2px;
+}
+.char-card.rarity-4:hover {
+  border-color: rgba(200,210,228,0.55);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 50px rgba(180,190,210,0.15), inset 0 0 10px rgba(180,190,210,0.05);
+}
+
+.char-card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--gold) 50%, transparent);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+.char-card:hover::before { opacity: 1; }
+.char-card:hover {
+  transform: translateY(-6px);
+  border-color: rgba(212,168,67,0.3);
+  box-shadow: 0 12px 40px rgba(0,0,0,0.7), 0 0 50px rgba(212,168,67,0.08);
+}
+
+.char-card-image {
+  width: 100%;
+  height: 280px;
+  overflow: hidden;
+  position: relative;
+  background: linear-gradient(135deg, #1a1a22, #0e0e15);
+}
+.char-card-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+  transition: transform 0.5s ease, filter 0.3s ease;
+  filter: brightness(0.85);
+}
+.char-card:hover .char-card-image img {
+  transform: scale(1.08);
+  filter: brightness(1.0);
+}
+.char-card-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(14,14,21,0.95) 100%);
+  pointer-events: none;
+}
+
+/* Badges on card */
+.influence-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 11px;
+  padding: 3px 8px;
+  background: rgba(0,0,0,0.75);
+  border-radius: 2px;
+  z-index: 2;
+  color: var(--gold-light);
+  backdrop-filter: blur(4px);
+  letter-spacing: 1px;
+}
+.series-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  font-size: 8px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  background: rgba(0,0,0,0.7);
+  border-left: 2px solid var(--gold);
+  z-index: 2;
+  backdrop-filter: blur(4px);
+}
+
+/* Card info with overall rating */
+.char-card-info {
+  padding: 14px 16px;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+}
+.card-text-area { flex: 1; min-width: 0; }
+.char-name-jp {
+  font-weight: 900;
+  font-size: 18px;
+  line-height: 1.2;
+  margin-bottom: 3px;
+}
+.char-name-en {
+  font-family: 'Oswald', sans-serif;
+  font-size: 10px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 8px;
+}
+.char-quick-stats {
+  display: flex;
+  gap: 10px;
+  font-size: 10px;
+  color: rgba(255,255,255,0.4);
+  flex-wrap: wrap;
+}
+.char-quick-stats span {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+/* ── OVERALL RATING (card) ── */
+.card-overall {
+  flex-shrink: 0;
+  width: 62px;
+  text-align: center;
+  padding-top: 2px;
+}
+.overall-number {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 40px;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff 10%, var(--gold-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  position: relative;
+}
+.overall-number::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 26px;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+.overall-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 7px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.5;
+  margin-top: 6px;
+}
+
+/* ── MODAL ── */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.92);
+  z-index: 1000;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  overflow-y: auto;
+  backdrop-filter: blur(4px);
+}
+.modal-overlay.active { display: flex; animation: fadeIn 0.3s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+.modal-content {
+  background: var(--card-bg);
+  border: 1px solid rgba(212,168,67,0.3);
+  border-radius: 4px;
+  max-width: 920px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  position: relative;
+  animation: slideUp 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.modal-content::-webkit-scrollbar { width: 6px; }
+.modal-content::-webkit-scrollbar-track { background: rgba(0,0,0,0.3); }
+.modal-content::-webkit-scrollbar-thumb { background: rgba(212,168,67,0.3); border-radius: 3px; }
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(40px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 40px;
+  height: 40px;
+  background: rgba(0,0,0,0.6);
+  border: 1px solid rgba(255,255,255,0.2);
+  border-radius: 2px;
+  cursor: pointer;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  font-size: 24px;
+  color: rgba(255,255,255,0.6);
+}
+.modal-close:hover {
+  background: var(--red);
+  border-color: var(--red);
+  color: #fff;
+}
+
+/* ── PROFILE DETAIL ── */
+.profile-detail {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.profile-image-section {
+  position: relative;
+  min-height: 550px;
+  overflow: hidden;
+  background: linear-gradient(135deg, #1a1a22, #0e0e15);
+}
+.profile-image-section img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: top center;
+}
+.profile-image-section::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(14,14,21,0.3) 100%);
+}
+/* Overall on detail image */
+.detail-overall-badge {
+  position: absolute;
+  bottom: 20px;
+  left: 20px;
+  z-index: 5;
+  text-align: center;
+  background: rgba(0,0,0,0.7);
+  padding: 10px 18px;
+  border: 1px solid rgba(212,168,67,0.3);
+  border-radius: 2px;
+  backdrop-filter: blur(6px);
+}
+.detail-overall-num {
+  font-family: 'Bebas Neue', sans-serif;
+  font-size: 52px;
+  line-height: 1;
+  background: linear-gradient(180deg, #fff 10%, var(--gold-light) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.detail-overall-label {
+  font-family: 'Oswald', sans-serif;
+  font-size: 8px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  opacity: 0.6;
+  margin-top: 4px;
+}
+
+.profile-info-section {
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  overflow-y: auto;
+}
+
+.profile-name-block .char-name-jp { font-size: 28px; margin-bottom: 4px; }
+.profile-name-block .char-name-en { font-size: 12px; margin-bottom: 12px; }
+.origin-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 2px;
+  background: rgba(212,168,67,0.15);
+  border: 1px solid rgba(212,168,67,0.35);
+  color: var(--gold-light);
+  letter-spacing: 1px;
+}
+.influence-tag {
+  display: inline-block;
+  font-size: 12px;
+  padding: 4px 8px;
+  margin-left: 6px;
+  color: var(--gold-light);
+  letter-spacing: 2px;
+}
+
+.profile-section {
+  padding-bottom: 14px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+.profile-section:last-child { border-bottom: none; }
+.section-title {
+  font-family: 'Oswald', sans-serif;
+  font-size: 9px;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+  opacity: 0.7;
+}
+
+.stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+.stat-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+  font-size: 11px;
+}
+.stat-label { color: rgba(255,255,255,0.4); }
+.stat-value { font-weight: 700; }
+
+.ability-list { display: flex; flex-direction: column; gap: 10px; }
+.ability-row { display: flex; align-items: center; gap: 10px; }
+.ability-name {
+  font-size: 10px;
+  color: rgba(255,255,255,0.5);
+  min-width: 80px;
+  font-family: 'Oswald', sans-serif;
+  letter-spacing: 1px;
+}
+.ability-bar-wrapper {
+  flex: 1;
+  height: 4px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.ability-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+.bar-power { background: linear-gradient(90deg, #c41e3a, #e85d75); }
+.bar-speed { background: linear-gradient(90deg, #2a9d8f, #5dd9ca); }
+.bar-technique { background: linear-gradient(90deg, #1a3a6b, #4a8fd4); }
+.bar-stamina { background: linear-gradient(90deg, #d4a843, #f0d078); }
+.ability-value {
+  font-family: 'Oswald', sans-serif;
+  font-size: 12px;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: right;
+}
+
+/* WORK LINKS */
+.work-link {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 2px;
+  text-decoration: none;
+  color: rgba(255,255,255,0.7);
+  transition: all 0.3s ease;
+  font-size: 12px;
+}
+.work-link:hover {
+  background: rgba(212,168,67,0.1);
+  border-color: rgba(212,168,67,0.4);
+  color: var(--gold-light);
+  transform: translateX(4px);
+}
+.work-icon { font-size: 14px; opacity: 0.6; }
+.work-title { flex: 1; font-weight: 500; }
+.work-arrow { font-family: 'Oswald', sans-serif; opacity: 0.4; transition: opacity 0.3s ease; }
+.work-link:hover .work-arrow { opacity: 1; }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 900px) {
+  .profile-detail { grid-template-columns: 1fr; }
+  .profile-image-section { min-height: 400px; }
+}
+@media (max-width: 768px) {
+  .site-title { font-size: 36px; letter-spacing: 6px; }
+  .roster-grid {
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 14px;
+  }
+  .char-card-image { height: 200px; }
+  .char-card-info { padding: 10px 12px; gap: 8px; }
+  .card-overall { width: 50px; }
+  .overall-number { font-size: 32px; }
+  .profile-info-section { padding: 20px; }
+  .modal-content { max-height: 95vh; }
+  .stat-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <h1 class="site-title">Character Roster</h1>
+  <p class="site-subtitle">粕田台団地 — Fighters File</p>
+  <p class="site-tagline"><em>団地プロレス</em> — 全選手名鑑</p>
+</header>
+
+<div class="filter-bar">
+  <button class="filter-btn active" data-filter="all">全選手</button>
+  <button class="filter-btn" data-filter="inf-high">★★★★+</button>
+  <button class="filter-btn" data-filter="inf-mid">★★★</button>
+  <button class="filter-btn" data-filter="inf-low">★★以下</button>
+  <button class="filter-btn" data-filter="overall-desc">総合力順</button>
+</div>
+
+<div class="roster-grid" id="rosterGrid"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal-content" id="modalContent">
+    <div class="modal-close" id="modalClose">×</div>
+    <div class="profile-detail" id="profileDetail"></div>
+  </div>
+</div>
+
+<script>
+/* ══════════════════════════════
+   AUDIO ENGINE — Web Audio API
+   ══════════════════════════════ */
+let audioCtx = null;
+function getAudioCtx() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  return audioCtx;
+}
+
+// Cyber blip — card hover
+function sfxHover() {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(1200, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1800, ctx.currentTime + 0.06);
+    g.gain.setValueAtTime(0.06, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+    o.connect(g).connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.1);
+  } catch(e) {}
+}
+
+// Confirm beep — card click / modal open
+function sfxOpen() {
+  try {
+    const ctx = getAudioCtx();
+    // layered tones
+    [800, 1200, 1600].forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = i === 0 ? 'sine' : 'triangle';
+      o.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.04);
+      o.frequency.exponentialRampToValueAtTime(freq * 1.15, ctx.currentTime + i * 0.04 + 0.08);
+      g.gain.setValueAtTime(0.07 - i * 0.015, ctx.currentTime + i * 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.04 + 0.15);
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + i * 0.04);
+      o.stop(ctx.currentTime + i * 0.04 + 0.15);
+    });
+  } catch(e) {}
+}
+
+// Close / dismiss
+function sfxClose() {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'sine';
+    o.frequency.setValueAtTime(900, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(400, ctx.currentTime + 0.12);
+    g.gain.setValueAtTime(0.06, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+    o.connect(g).connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.15);
+  } catch(e) {}
+}
+
+// Filter click
+function sfxFilter() {
+  try {
+    const ctx = getAudioCtx();
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    o.type = 'square';
+    o.frequency.setValueAtTime(600, ctx.currentTime);
+    o.frequency.exponentialRampToValueAtTime(1400, ctx.currentTime + 0.05);
+    g.gain.setValueAtTime(0.04, ctx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.08);
+    o.connect(g).connect(ctx.destination);
+    o.start(); o.stop(ctx.currentTime + 0.08);
+  } catch(e) {}
+}
+
+// Boot chime — page load
+function sfxBoot() {
+  try {
+    const ctx = getAudioCtx();
+    const notes = [523, 659, 784, 1047];
+    notes.forEach((freq, i) => {
+      const o = ctx.createOscillator();
+      const g = ctx.createGain();
+      o.type = 'sine';
+      o.frequency.setValueAtTime(freq, ctx.currentTime + i * 0.09);
+      g.gain.setValueAtTime(0.06, ctx.currentTime + i * 0.09);
+      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.09 + 0.25);
+      o.connect(g).connect(ctx.destination);
+      o.start(ctx.currentTime + i * 0.09);
+      o.stop(ctx.currentTime + i * 0.09 + 0.25);
+    });
+  } catch(e) {}
+}
+
+/* ══════════════════════════
+   CHARACTER DATABASE
+   ══════════════════════════ */
+const CHARACTERS = [
+  {
+    id: 1,
+    nameJp: "高槻千歳",
+    nameEn: "Chitose Takatsuki",
+    height: 159, age: 33,
+    affiliation: "6街区１号棟",
+    influence: 5,
+    profile: "団地内プロレスのヒエラルキーの頂点に座る存在。入居直後の試合で井沢に敗北して以来、井沢に確実に勝てる方法を研究し半年後に井沢を撃破。その後も執拗に攻撃を続け、友人を奪い孤立させた。",
+    personality: "穏やかな表情の裏に苛烈な支配欲を隠す。リングでは一切の容赦がなく、勝負への執念は団地随一。",
+    stats: { power: 71, speed: 77, technique: 79, stamina: 74, mental: 74 },
+    signature: "ジャーマンスープレックス、STF、ランニングニー",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1574509" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/8b1528/ffffff?text=Chitose",
+    imageFull: "https://via.placeholder.com/600x1200/8b1528/ffffff?text=Chitose+Full"
+  },
+  {
+    id: 2,
+    nameJp: "井沢遥",
+    nameEn: "Haruka Izawa",
+    height: 163, age: 34,
+    affiliation: "１街区４号棟",
+    influence: 4,
+    profile: "入居7年目。以前は団地内プロレスで実力者として尊敬を集めていたが、高槻の入居後に敗北が重なり地位を奪われた。友人も奪われ孤立したまま4年が経過。新たに入居してきた高橋・菊池のために、もう一度立場を確立したいと願っている。",
+    personality: "クレバーで冷静沈着。苦境にあっても折れない芯の強さを持つ。後輩思い。",
+    stats: { power: 68, speed: 73, technique: 82, stamina: 64, mental: 77 },
+    signature: "クロスフェイス、ダイビングクロスボディ、逆エビ固め",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1574509" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/1a3a6b/ffffff?text=Haruka",
+    imageFull: "https://via.placeholder.com/600x1200/1a3a6b/ffffff?text=Haruka+Full"
+  },
+  {
+    id: 3,
+    nameJp: "斎藤麻衣",
+    nameEn: "Mai Saito",
+    height: 156, age: 26,
+    affiliation: "７街区４号棟",
+    influence: 3,
+    profile: "入居2年目。若くして実力を示している注目株。小柄ながらテクニックと精神力を武器に格上にも食い下がる。追い込まれてからの粘りに定評がある。",
+    personality: "負けず嫌いで努力家。年上の主婦たちにも臆さず立ち向かう気の強さ。",
+    stats: { power: 64, speed: 68, technique: 76, stamina: 69, mental: 73 },
+    signature: "フィギュア4レッグロック、ローリングクレイドル",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1574509" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/c41e3a/ffffff?text=Mai",
+    imageFull: "https://via.placeholder.com/600x1200/c41e3a/ffffff?text=Mai+Full"
+  },
+  {
+    id: 4,
+    nameJp: "菊池璃子",
+    nameEn: "Riko Kikuchi",
+    height: 162, age: 27,
+    affiliation: "１街区６号棟",
+    influence: 2,
+    profile: "入居1ヶ月。最近引っ越してきた、ちょっときつめの雰囲気の奥さん。以前の住まいでは町内会プロレスでなかなかの実力者で、けっこう自信を持っている。",
+    personality: "外には厳しめだが、家の中では陽気で元気。夫目線だと頼りになる奥さん。",
+    stats: { power: 73, speed: 69, technique: 53, stamina: 65, mental: 78 },
+    signature: "パワーボム、ラリアット",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1526739" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/0d1f3c/ffffff?text=Riko",
+    imageFull: "https://via.placeholder.com/600x1200/0d1f3c/ffffff?text=Riko+Full"
+  },
+  {
+    id: 5,
+    nameJp: "高橋まゆみ",
+    nameEn: "Mayumi Takahashi",
+    height: 161, age: 28,
+    affiliation: "１街区６号棟",
+    influence: 2,
+    profile: "入居3年目。おっとりした育ちの良さげな奥さん。もともとお嬢様だが両親の反対を押し切っての恋愛結婚で、今でも旦那とラブラブ。入居直後は惨憺たる成績だったが、井沢から基本を教わり勝率が上がってきている。",
+    personality: "真面目で辛抱強い。井沢を信頼しており、彼女を見捨てたかつての友人たちを嫌悪している。1女の母。",
+    stats: { power: 65, speed: 60, technique: 57, stamina: 73, mental: 79 },
+    signature: "スリーパーホールド、ボディシザース",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1526739" },
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1694193" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/3a2a1a/ffffff?text=Mayumi",
+    imageFull: "https://via.placeholder.com/600x1200/3a2a1a/ffffff?text=Mayumi+Full"
+  },
+  {
+    id: 6,
+    nameJp: "相田萌",
+    nameEn: "Moe Aida",
+    height: 158, age: 29,
+    affiliation: "5街区３号棟",
+    influence: 3,
+    profile: "入居6年目。かつての井沢のママ友。見た目も言動も若々しい。甘え上手な性格で、以前は井沢に色々教わっていたが、井沢が落ち目になったと見るや高槻グループに鞍替えした。彼女の変節は特に井沢を追い詰めた。",
+    personality: "甘え上手で世渡り巧み。穏やかに見えて、状況に応じて立ち回るしたたかさを持つ。",
+    stats: { power: 64, speed: 63, technique: 63, stamina: 67, mental: 55 },
+    signature: "バックドロップ、ボストンクラブ",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1694193" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/2a4a3a/ffffff?text=Moe",
+    imageFull: "https://via.placeholder.com/600x1200/2a4a3a/ffffff?text=Moe+Full"
+  },
+  {
+    id: 7,
+    nameJp: "西川ちあき",
+    nameEn: "Chiaki Nishikawa",
+    height: 163, age: 33,
+    affiliation: "粕田台団地",
+    influence: 2,
+    profile: "入居8年目。高槻の取巻きの一人。かつては井沢の友人だったが、井沢が失墜した後に高槻側に付いた。団地の勢力図を生き抜いてきた古株。",
+    personality: "お調子者で明るい性格。ムードメーカーだが、長丁場の試合ではスタミナが課題。",
+    stats: { power: 68, speed: 58, technique: 48, stamina: 58, mental: 54 },
+    signature: "ドロップキック、ネックブリーカー",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1574509" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/2a3a4a/ffffff?text=Chiaki",
+    imageFull: "https://via.placeholder.com/600x1200/2a3a4a/ffffff?text=Chiaki+Full"
+  },
+  {
+    id: 8,
+    nameJp: "三橋ふみえ",
+    nameEn: "Fumie Mitsuhashi",
+    height: 168, age: 37,
+    affiliation: "３街区４号棟",
+    influence: 2,
+    profile: "入居3年目。団地最年長のベテラン。テクニック81は団地内トップクラス。身体能力の衰えを経験と技術でカバーし、若手を翻弄する老獪な試合運びが真骨頂。",
+    personality: "物腰は柔らかいが、リング上では狡猾。相手の隙を逃さない勝負師の顔を持つ。",
+    stats: { power: 63, speed: 59, technique: 81, stamina: 58, mental: 50 },
+    signature: "アームバー、回転エビ固め、各種丸め込み",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1574498" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/4a3a2a/ffffff?text=Fumie",
+    imageFull: "https://via.placeholder.com/600x1200/4a3a2a/ffffff?text=Fumie+Full"
+  },
+  {
+    id: 9,
+    nameJp: "小森さなえ",
+    nameEn: "Sanae Komori",
+    height: 164, age: 31,
+    affiliation: "２街区",
+    influence: 2,
+    profile: "入居4年目。パワーこそ十分だが、スピードとテクニックに大きな課題を残す。年の割に落ち着きがなく、結構ズボラ。でも夫婦仲は円満。伸びしろはある。",
+    personality: "おっとりしているが芯は強い。地道にコツコツと努力を重ねるタイプ。",
+    stats: { power: 68, speed: 48, technique: 38, stamina: 58, mental: 60 },
+    signature: "ベアハッグ、ボディスラム",
+    appearances: [
+      { title: "団地妻プロレス", url: "#" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/1a2a3a/ffffff?text=Sanae",
+    imageFull: "https://via.placeholder.com/600x1200/1a2a3a/ffffff?text=Sanae+Full"
+  },
+  {
+    id: 10,
+    nameJp: "阿部みのり",
+    nameEn: "Minori Abe",
+    height: 154, age: 23,
+    affiliation: "３街区２号棟",
+    influence: 1,
+    profile: "入居4ヶ月。学生気分が抜けない若奥様。社会人経験も浅いまま結婚・団地入りした完全なる無垢な存在。右も左もわからず、先輩妻たちの「教育」のターゲットにされる。",
+    personality: "内気で自信がないが、プロレスへの純粋な情熱だけは誰にも負けない。",
+    stats: { power: 43, speed: 40, technique: 38, stamina: 48, mental: 50 },
+    signature: "ドロップキック（練習中）、体当たり",
+    appearances: [
+      { title: "団地妻プロレス", url: "https://takoyaki.fanbox.cc/posts/1574498" }
+    ],
+    imageBust: "https://via.placeholder.com/400x600/3a1a2a/ffffff?text=Minori",
+    imageFull: "https://via.placeholder.com/600x1200/3a1a2a/ffffff?text=Minori+Full"
+  }
+];
+
+/* ── Utilities ── */
+function influenceStars(n) {
+  return '★'.repeat(n) + '<span style="opacity:0.15">' + '★'.repeat(5 - n) + '</span>';
+}
+function overall(stats) {
+  const vals = visibleStats.map(k => stats[k]);
+  return Math.round(vals.reduce((a, b) => a + b, 0) / vals.length);
+}
+const statLabel = { power:'POWER', speed:'SPEED', technique:'TECHNIQUE', stamina:'STAMINA' };
+const statBar = { power:'bar-power', speed:'bar-speed', technique:'bar-technique', stamina:'bar-stamina' };
+const visibleStats = ['power','speed','technique','stamina'];
+
+/* ── Filtering ── */
+function filterChars(f) {
+  switch(f) {
+    case 'inf-high': return CHARACTERS.filter(c => c.influence >= 4);
+    case 'inf-mid': return CHARACTERS.filter(c => c.influence === 3);
+    case 'inf-low': return CHARACTERS.filter(c => c.influence <= 2);
+    case 'overall-desc': return [...CHARACTERS].sort((a, b) => overall(b.stats) - overall(a.stats));
+    default: return [...CHARACTERS].sort((a, b) => b.influence - a.influence || overall(b.stats) - overall(a.stats));
+  }
+}
+
+/* ── Render Cards ── */
+function renderRoster(f = 'all') {
+  const grid = document.getElementById('rosterGrid');
+  const chars = filterChars(f);
+  grid.innerHTML = chars.map((c, i) => {
+    const rClass = c.influence >= 5 ? ' rarity-5' : c.influence >= 4 ? ' rarity-4' : '';
+    return `
+    <div class="char-card${rClass}" data-id="${c.id}" style="animation-delay:${i * 0.05}s">
+      <div class="char-card-image">
+        <div class="series-badge">${c.affiliation}</div>
+        <div class="influence-badge">${influenceStars(c.influence)}</div>
+        <img src="${c.imageBust}" alt="${c.nameJp}" loading="lazy">
+      </div>
+      <div class="char-card-info">
+        <div class="card-text-area">
+          <div class="char-name-jp">${c.nameJp}</div>
+          <div class="char-name-en">${c.nameEn}</div>
+          <div class="char-quick-stats">
+            <span>📏 ${c.height}cm</span>
+            <span>🎂 ${c.age}歳</span>
+          </div>
+        </div>
+        <div class="card-overall">
+          <div class="overall-number">${overall(c.stats)}</div>
+          <div class="overall-label">Overall</div>
+        </div>
+      </div>
+    </div>
+  `}).join('');
+
+  // Attach hover + click SFX
+  grid.querySelectorAll('.char-card').forEach(card => {
+    card.addEventListener('mouseenter', sfxHover);
+    card.addEventListener('click', () => {
+      sfxOpen();
+      showDetail(parseInt(card.dataset.id));
+    });
+  });
+}
+
+/* ── Detail Modal ── */
+function showDetail(id) {
+  const c = CHARACTERS.find(x => x.id === id);
+  if (!c) return;
+  const ov = overall(c.stats);
+
+  document.getElementById('profileDetail').innerHTML = `
+    <div class="profile-image-section">
+      <img src="${c.imageFull}" alt="${c.nameJp}">
+      <div class="detail-overall-badge">
+        <div class="detail-overall-num">${ov}</div>
+        <div class="detail-overall-label">Overall</div>
+      </div>
+    </div>
+    <div class="profile-info-section">
+      <div class="profile-name-block">
+        <div class="char-name-jp">${c.nameJp}</div>
+        <div class="char-name-en">${c.nameEn}</div>
+        <span class="origin-tag">団地プロレス</span>
+        <span class="influence-tag">${influenceStars(c.influence)}</span>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-title">Profile</div>
+        <p style="font-size:13px;line-height:1.8;color:rgba(255,255,255,0.7);">${c.profile}</p>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-title">Data</div>
+        <div class="stat-grid">
+          <div class="stat-item"><span class="stat-label">身長</span><span class="stat-value">${c.height} cm</span></div>
+          <div class="stat-item"><span class="stat-label">年齢</span><span class="stat-value">${c.age}歳</span></div>
+          <div class="stat-item"><span class="stat-label">所属</span><span class="stat-value">${c.affiliation}</span></div>
+          <div class="stat-item"><span class="stat-label">総合力</span><span class="stat-value">${ov}</span></div>
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-title">Personality</div>
+        <p style="font-size:12px;line-height:1.7;color:rgba(255,255,255,0.6);">${c.personality}</p>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-title">Combat Abilities</div>
+        <div class="ability-list">
+          ${visibleStats.map(k => `
+            <div class="ability-row">
+              <span class="ability-name">${statLabel[k]}</span>
+              <div class="ability-bar-wrapper"><div class="ability-bar-fill ${statBar[k]}" style="width:${c.stats[k]}%"></div></div>
+              <span class="ability-value">${c.stats[k]}</span>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-title">Signature Moves / 必殺技</div>
+        <p style="font-size:12px;line-height:1.7;color:rgba(255,255,255,0.6);">${c.signature}</p>
+      </div>
+
+      <div class="profile-section">
+        <div class="section-title">Appearances / 登場作品</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px;">
+          ${c.appearances.map(a => `
+            <a href="${a.url}" class="work-link" target="_blank" rel="noopener noreferrer">
+              <span class="work-icon">📖</span>
+              <span class="work-title">${a.title}</span>
+              <span class="work-arrow">→</span>
+            </a>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.getElementById('modalOverlay').classList.add('active');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeModal() {
+  sfxClose();
+  document.getElementById('modalOverlay').classList.remove('active');
+  document.body.style.overflow = '';
+}
+
+/* ── Events ── */
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    sfxFilter();
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderRoster(btn.dataset.filter);
+  });
+});
+
+document.getElementById('modalClose').addEventListener('click', closeModal);
+document.getElementById('modalOverlay').addEventListener('click', e => {
+  if (e.target.id === 'modalOverlay') closeModal();
+});
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+// Boot
+renderRoster();
+// Play boot chime on first interaction (autoplay policy)
+document.addEventListener('click', function bootOnce() {
+  sfxBoot();
+  document.removeEventListener('click', bootOnce);
+}, { once: true });
+</script>
+
+</body>
+</html>
