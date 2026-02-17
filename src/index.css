@@ -1,0 +1,11 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  font-family: 'Inter', 'Noto Sans JP', system-ui, sans-serif;
+}
+
+* {
+  scrollbar-width: thin;
+}
