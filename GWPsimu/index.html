@@ -382,8 +382,11 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg-dark);color:var(-
 .log-entry.finish{color:var(--gold-light);font-weight:700}
 .log-entry.system{color:rgba(212,168,67,0.7);font-style:italic}
 
-/* Next turn btn */
-.action-bar{text-align:center;margin-top:4px}
+/* Next turn btn — fixed bottom bar */
+.action-bar{position:fixed;bottom:0;left:0;right:0;z-index:30;text-align:center;padding:10px 20px 14px;
+  background:linear-gradient(180deg,transparent 0%,rgba(10,10,16,0.95) 30%,rgba(10,10,16,0.98) 100%);
+  backdrop-filter:blur(6px)}
+.action-bar-spacer{height:70px}
 .btn-next{font-family:'Oswald',sans-serif;font-size:18px;font-weight:700;letter-spacing:4px;
   text-transform:uppercase;padding:14px 0;width:min(700px,100%);border:1px solid var(--gold-dim);
   border-radius:3px;cursor:pointer;background:linear-gradient(135deg,rgba(212,168,67,0.15),rgba(212,168,67,0.05));
@@ -456,7 +459,7 @@ body{font-family:'Noto Sans JP',sans-serif;background:var(--bg-dark);color:var(-
 .finish-click-overlay.show{opacity:1;pointer-events:auto}
 .finish-click-overlay::before{content:'';position:absolute;inset:0;
   background:radial-gradient(ellipse 60% 50% at 50% 50%,transparent 40%,rgba(0,0,0,0.4) 100%);pointer-events:none}
-.finish-click-btn{position:fixed;left:50%;bottom:60px;transform:translateX(-50%) scale(0.8);
+.finish-click-btn{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) scale(0.8);
   font-family:'Bebas Neue',sans-serif;font-size:28px;letter-spacing:4px;
   color:#fff;padding:16px 48px;border:2px solid rgba(212,168,67,0.8);border-radius:8px;
   background:linear-gradient(135deg,#8b0000,#d4a843);cursor:pointer;z-index:45;
@@ -914,6 +917,8 @@ function showFinishClickBtn(type,v){
   const ov=document.getElementById('finishOverlay');
   const nBtn=document.getElementById('nBtn');
   if(nBtn)nBtn.style.display='none';
+  const actBar=nBtn?nBtn.closest('.action-bar'):null;
+  if(actBar)actBar.style.display='none';
   const labels={'フォール':'スリーカウント…！？','ギブアップ':'ギブアップ…！？','丸め込み':'カウント…！？'};
   btn.textContent=labels[type]||'…！？';
   btn.disabled=false;
@@ -1070,7 +1075,8 @@ function showCountText(text,cls){
   setTimeout(()=>el.remove(),1000);
 }
 function showNBtn(){
-  const nBtn=document.getElementById('nBtn');if(nBtn)nBtn.style.display='';
+  const nBtn=document.getElementById('nBtn');if(nBtn){nBtn.style.display='';
+    const actBar=nBtn.closest('.action-bar');if(actBar)actBar.style.display='';}
 }
 
 // ═══ STATE ═══
@@ -1292,6 +1298,7 @@ function renderMatch(){
       <div class="log-section"><div class="log-header">Battle Log</div>
         <div class="log-box" id="logBox">${logH}</div></div>
     </div>${fHTML(R,'right')}</div>
+    <div class="action-bar-spacer"></div>
     <div class="action-bar"><button class="btn-next" id="nBtn" ${over||S.anim?'disabled':''}>
       ${over?(S.winner==='draw'?'DRAW!':`${(S.winner==='left'?L:R).name} WIN!`):'▶  NEXT TURN'}</button></div>`;
   if(!over&&!S.anim)document.getElementById('nBtn').addEventListener('click',nextTurn);
