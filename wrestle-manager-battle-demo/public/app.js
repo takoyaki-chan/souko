@@ -8,6 +8,7 @@
 
   const state = {
     screen: 'selection',
+    selectionPhase: 'player',
     playerId: null,
     opponentId: null,
     result: null,
@@ -40,6 +41,17 @@
         this.audio.currentTime = 0;
       } catch (_) {}
       this.audio = null;
+    },
+  };
+
+  const SelectionSound = {
+    play() {
+      try {
+        const audio = new Audio('./bgm/f11_ready_v1.mp3');
+        audio.preload = 'auto';
+        audio.volume = 0.42;
+        audio.play().catch(() => {});
+      } catch (_) {}
     },
   };
 
@@ -78,9 +90,13 @@
     </div>`;
   }
 
-  function fighterCard(fighter, selected) {
-    return `<button class="demo-fighter-card${selected ? ' selected' : ''}" type="button" role="listitem"
-      aria-pressed="${selected}" data-action="select-fighter" data-fighter-id="${fighter.id}">
+  function fighterCard(fighter, selectedRole, locked) {
+    const selected = Boolean(selectedRole);
+    const roleLabel = selectedRole === 'player' ? 'PLAYER' : selectedRole === 'opponent' ? 'OPPONENT' : '';
+    const statusLabel = selectedRole === 'player' ? 'あなたの選手' : selectedRole === 'opponent' ? '対戦相手' : '';
+    const canSelect = !locked;
+    return `<button class="demo-fighter-card${selected ? ` selected ${selectedRole}-selected` : ''}${locked ? ' locked' : ''}" type="button" role="listitem"
+      aria-pressed="${selected}" ${canSelect ? `data-action="select-fighter" data-fighter-id="${fighter.id}"` : 'disabled'}>
       <div class="demo-fighter-art"><img src="${escapeHtml(fighter.image)}" alt="${escapeHtml(fighter.name)}"></div>
       <div class="demo-fighter-info">
         <div class="demo-fighter-head">
@@ -90,7 +106,8 @@
         ${statBars(fighter)}
         <p>${escapeHtml(fighter.description)}</p>
       </div>
-      ${selected ? '<span class="demo-selected"><b>✓ PLAYER</b><small>選択中</small></span>' : ''}
+      ${selected ? `<span class="demo-selected ${selectedRole}"><b>✓ ${roleLabel}</b><small>${statusLabel}</small></span>` : ''}
+      ${locked ? '<span class="demo-locked">PLAYER FIXED</span>' : ''}
     </button>`;
   }
 
@@ -99,31 +116,47 @@
     state.screen = 'selection';
     state.result = null;
     state.completionTracked = false;
-    const selected = fighterById(state.playerId);
-    const opponent = selected ? fighterById(opponentByPlayer[selected.id]) : null;
-    state.opponentId = opponent ? opponent.id : null;
+    const player = fighterById(state.playerId);
+    const opponent = fighterById(state.opponentId);
+    const choosingOpponent = state.selectionPhase === 'opponent';
+    const ready = Boolean(player && opponent);
+    const heading = !player ? 'まず、あなたの選手を選んでください' : !opponent ? '次に、対戦相手を選んでください' : 'この組み合わせで試合を始めますか？';
+    const guide = !player
+      ? '選手を1人選ぶと、その選手はPLAYER枠に固定されます。続けて対戦相手を選んでください。'
+      : !opponent
+        ? 'PLAYER枠は固定されています。青いOPPONENT枠に入れる選手を選んでください。'
+        : '選手ごとの能力とスタイルが、技の選択・命中・ダメージ・スタミナ消費・決着までの流れに影響します。';
 
     root.innerHTML = `<section class="demo-selection" aria-labelledby="selection-title">
       <div class="demo-section-head">
         <div>
           <p>WRESTLE-MANAGER / FREE BATTLE DEMO</p>
-          <h1 id="selection-title">選手を選んで、1試合を観戦</h1>
-          <span class="demo-battle-guide">選手ごとの能力とスタイルが、技の選択・命中・ダメージ・スタミナ消費・決着までの流れに影響します。技名や状態変化、試合ログを追いながら最後まで観戦できます。</span>
+          <h1 id="selection-title">${heading}</h1>
+          <span class="demo-battle-guide">${guide}</span>
         </div>
         <strong>1 MATCH</strong>
       </div>
-      <div class="demo-fighter-grid${selected ? ' has-selection' : ''}" role="list" aria-label="デモ選手一覧">
-        ${fighters.map((fighter) => fighterCard(fighter, fighter.id === state.playerId)).join('')}
-      </div>
-      ${selected && opponent ? `<div class="demo-matchup" aria-label="対戦カード">
-        <div><small>PLAYER</small><strong>${escapeHtml(selected.name)}</strong></div>
+      <div class="demo-choice-slots" aria-label="選択状況">
+        <div class="demo-choice-slot player${player ? ' filled' : ' active'}">
+          <small>STEP 1 · PLAYER</small><strong>${player ? escapeHtml(player.name) : 'あなたの選手を選択'}</strong><span>${player ? '選択済み' : '金色の枠で選択'}</span>
+        </div>
         <b>VS</b>
-        <div class="right"><small>OPPONENT</small><strong>${escapeHtml(opponent.name)}</strong></div>
-      </div>` : ''}
+        <div class="demo-choice-slot opponent${opponent ? ' filled' : choosingOpponent ? ' active' : ''}">
+          <small>STEP 2 · OPPONENT</small><strong>${opponent ? escapeHtml(opponent.name) : '対戦相手を選択'}</strong><span>${opponent ? '選択済み' : choosingOpponent ? '青色の枠で選択' : 'PLAYER選択後に解放'}</span>
+        </div>
+      </div>
+      <div class="demo-fighter-grid${player ? ' has-player' : ''}${ready ? ' ready' : ''}" role="list" aria-label="デモ選手一覧">
+        ${fighters.map((fighter) => fighterCard(
+          fighter,
+          fighter.id === state.playerId ? 'player' : fighter.id === state.opponentId ? 'opponent' : '',
+          choosingOpponent && fighter.id === state.playerId
+        )).join('')}
+      </div>
       <div class="demo-selection-actions">
-        <button class="demo-start-button" type="button" data-action="confirm" ${selected ? '' : 'disabled'}>
-          ${selected ? `${escapeHtml(selected.name)}で試合を始める` : '選手を選択してください'}
+        <button class="demo-start-button" type="button" data-action="confirm" ${ready ? '' : 'disabled'}>
+          ${ready ? `${escapeHtml(player.name)} vs ${escapeHtml(opponent.name)}で試合を始める` : !player ? 'PLAYERを選択してください' : 'OPPONENTを選択してください'}
         </button>
+        ${player ? '<button class="demo-reset-selection" type="button" data-action="reset-selection">PLAYERを選び直す</button>' : ''}
       </div>
     </section>`;
     focusApp();
@@ -372,10 +405,24 @@
       event.preventDefault();
       state.playerId = null;
       state.opponentId = null;
+      state.selectionPhase = 'player';
       renderSelection();
     } else if (action === 'select-fighter') {
-      state.playerId = Number(target.dataset.fighterId);
-      state.opponentId = opponentByPlayer[state.playerId];
+      const selectedId = Number(target.dataset.fighterId);
+      SelectionSound.play();
+      if (state.selectionPhase === 'player') {
+        state.playerId = selectedId;
+        state.opponentId = null;
+        state.selectionPhase = 'opponent';
+      } else {
+        state.opponentId = selectedId;
+      }
+      renderSelection();
+    } else if (action === 'reset-selection') {
+      state.playerId = null;
+      state.opponentId = null;
+      state.selectionPhase = 'player';
+      SelectionSound.play();
       renderSelection();
     } else if (action === 'confirm') {
       beginBattle();
@@ -386,6 +433,7 @@
       trackEvent('rematch', { mode: 'different' });
       state.playerId = null;
       state.opponentId = null;
+      state.selectionPhase = 'player';
       renderSelection();
     } else if (action === 'product-link') {
       trackEvent('product_link_click', { store: target.dataset.store || 'unknown' });
