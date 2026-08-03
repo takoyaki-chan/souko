@@ -90,7 +90,7 @@
         ${statBars(fighter)}
         <p>${escapeHtml(fighter.description)}</p>
       </div>
-      ${selected ? '<span class="demo-selected">PLAYER</span>' : ''}
+      ${selected ? '<span class="demo-selected"><b>✓ PLAYER</b><small>選択中</small></span>' : ''}
     </button>`;
   }
 
@@ -112,7 +112,7 @@
         </div>
         <strong>1 MATCH</strong>
       </div>
-      <div class="demo-fighter-grid" role="list" aria-label="デモ選手一覧">
+      <div class="demo-fighter-grid${selected ? ' has-selection' : ''}" role="list" aria-label="デモ選手一覧">
         ${fighters.map((fighter) => fighterCard(fighter, fighter.id === state.playerId)).join('')}
       </div>
       ${selected && opponent ? `<div class="demo-matchup" aria-label="対戦カード">
@@ -122,7 +122,7 @@
       </div>` : ''}
       <div class="demo-selection-actions">
         <button class="demo-start-button" type="button" data-action="confirm" ${selected ? '' : 'disabled'}>
-          ${selected ? 'この対戦で試合開始' : '選手を選択してください'}
+          ${selected ? `${escapeHtml(selected.name)}で試合を始める` : '選手を選択してください'}
         </button>
       </div>
     </section>`;
@@ -254,14 +254,6 @@
       if (sent || state.battleFrame !== iframe || !iframe.contentWindow) return;
       sent = true;
       iframe.contentWindow.postMessage(payload, window.location.origin);
-      window.setTimeout(() => {
-        if (state.battleFrame !== iframe || !iframe.contentWindow) return;
-        try {
-          if (typeof iframe.contentWindow.toggleAuto === 'function') iframe.contentWindow.toggleAuto();
-        } catch (_) {
-          // The product view remains manually operable if autoplay cannot be enabled.
-        }
-      }, 650);
     };
     iframe.addEventListener('load', () => window.setTimeout(sendOnce, 150), { once: true });
     iframe.src = `./battle/battle-engine.html?demo=${Date.now()}`;
