@@ -348,6 +348,55 @@
     `).join('')}</div>`;
   }
 
+  function promotionLink(name) {
+    return validProductUrl((config.promotionLinks || {})[name]);
+  }
+
+  function endPrimaryCta() {
+    const trialUrl = promotionLink('trialUrl');
+    const primaryUrl = promotionLink('primaryUrl');
+    const primaryLabel = String((config.promotionLinks || {}).primaryLabel || '').trim();
+    if (trialUrl) {
+      return `<a class="demo-primary-cta" href="${escapeHtml(trialUrl)}" target="_blank" rel="noopener noreferrer" data-action="primary-cta" data-destination="trial">無料で団体経営を始める</a>`;
+    }
+    if (primaryUrl) {
+      return `<a class="demo-primary-cta" href="${escapeHtml(primaryUrl)}" target="_blank" rel="noopener noreferrer" data-action="primary-cta" data-destination="product">${escapeHtml(primaryLabel || 'Wrestle-Manager本編を見る')}</a>`;
+    }
+    return '';
+  }
+
+  function finalHealth(fighter, side) {
+    const record = side === 'left' ? state.result.hpLeft : state.result.hpRight;
+    const max = Number(record && record.max) || 0;
+    const current = Math.max(0, Number(record && (record.final == null ? record.current : record.final)) || 0);
+    return { current, max, ratio: max > 0 ? Math.round((current / max) * 100) : 0 };
+  }
+
+  function winnerComment(winner) {
+    const move = state.result.finMove || state.result.finType || '激闘';
+    return `${winner.name}が${move}で勝利。最後まで目が離せない一戦となりました。`;
+  }
+
+  function shareResult() {
+    const player = fighterById(state.playerId);
+    const opponent = fighterById(state.opponentId);
+    const winner = state.result.winner === 'left' ? player : state.result.winner === 'right' ? opponent : null;
+    const lines = [
+      '『Wrestle-Manager』無料バトルデモをプレイ！',
+      '',
+      `${player ? player.name : ''} vs ${opponent ? opponent.name : ''}`,
+      `勝者：${winner ? winner.name : '引き分け'}`,
+      `決まり手：${formatFinish(state.result.finType, state.result.finMove)}`,
+      `試合時間：${formatJapaneseTime(state.result.turns)}`,
+      '',
+      'あなたの試合ではどちらが勝つ？',
+      window.location.origin + window.location.pathname,
+      '#WrestleManager',
+    ];
+    trackEvent('result_share_click', { player: player ? player.name : '', opponent: opponent ? opponent.name : '', winner: winner ? winner.name : 'draw' });
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(lines.join('\n'))}`, '_blank', 'noopener,noreferrer');
+  }
+
   function renderEnd() {
     trackBattleComplete();
     cleanupBattleFrame();
@@ -355,22 +404,43 @@
     const player = fighterById(state.playerId);
     const opponent = fighterById(state.opponentId);
     const winner = state.result.winner === 'left' ? player : state.result.winner === 'right' ? opponent : null;
+    const loser = winner === player ? opponent : player;
+    const winnerSide = state.result.winner === 'left' ? 'left' : 'right';
+    const loserSide = winnerSide === 'left' ? 'right' : 'left';
+    const winnerHealth = winner ? finalHealth(winner, winnerSide) : { ratio: 0 };
+    const loserHealth = loser ? finalHealth(loser, loserSide) : { ratio: 0 };
+    const followXUrl = promotionLink('followXUrl');
     root.innerHTML = `<section class="demo-result" aria-labelledby="result-title">
-      <p>MATCH COMPLETE</p>
-      <h1 id="result-title">${winner ? `${escapeHtml(winner.name)} 勝利` : '時間切れ引き分け'}</h1>
-      <div class="demo-result-summary">
+      <div class="demo-result-hero">
+        <div class="demo-result-fighter winner"><img src="./image/full/full_${escapeHtml(winner ? winner.assetKey : player.assetKey)}.webp" alt="${escapeHtml(winner ? winner.name : player.name)}"></div>
+        ${loser ? `<div class="demo-result-fighter loser"><img src="./image/full/full_${escapeHtml(loser.assetKey)}.webp" alt="${escapeHtml(loser.name)}"></div>` : ''}
+        <div class="demo-result-title">
+          <p>MATCH RESULT</p>
+          <span>WINNER</span>
+          <h1 id="result-title">${winner ? escapeHtml(winner.name) : '時間切れ引き分け'}</h1>
+          <strong>${winner ? winnerComment(winner) : '最後まで譲らない、拮抗した試合となりました。'}</strong>
+        </div>
+      </div>
+      <div class="demo-result-summary" aria-label="試合結果の詳細">
         <div><small>決まり手</small><strong>${escapeHtml(formatFinish(state.result.finType, state.result.finMove))}</strong></div>
         <div><small>試合時間</small><strong>${formatJapaneseTime(state.result.turns)}</strong></div>
+        <div><small>${escapeHtml(winner ? winner.name : 'PLAYER')} 残り体力</small><strong>${winnerHealth.ratio}%</strong></div>
+        <div><small>${escapeHtml(loser ? loser.name : 'OPPONENT')} 残り体力</small><strong>${loserHealth.ratio}%</strong></div>
       </div>
       <div class="demo-product-message">
-        <strong>能力とスタイルの違いが、一試合ごとの攻防を変えます。</strong>
-        <span>技名、ダメージ、状態変化、フォール／ギブアップの進行は、試合中のログから確認できます。</span>
+        <strong>このデモで遊べるのは、『Wrestle-Manager』の試合観戦部分です。</strong>
+        <span>本編では選手をスカウト・育成し、対戦カードを組み、団体を経営しながら、自分だけの女子プロレス史を作っていきます。</span>
       </div>
+      ${endPrimaryCta()}
       <div class="demo-result-actions">
         <button type="button" data-action="same-rematch">同じ組み合わせでもう一度</button>
         <button type="button" data-action="new-rematch">別の対戦を選ぶ</button>
       </div>
       ${productLinks()}
+      <div class="demo-result-social">
+        <button type="button" data-action="share-result">この試合結果をXで共有</button>
+        ${followXUrl ? `<a href="${escapeHtml(followXUrl)}" target="_blank" rel="noopener noreferrer" data-action="follow-x">開発者をXでフォロー</a>` : ''}
+      </div>
     </section>`;
     focusApp();
   }
@@ -437,6 +507,12 @@
       renderSelection();
     } else if (action === 'product-link') {
       trackEvent('product_link_click', { store: target.dataset.store || 'unknown' });
+    } else if (action === 'primary-cta') {
+      trackEvent('primary_cta_click', { destination: target.dataset.destination || 'unknown' });
+    } else if (action === 'share-result') {
+      shareResult();
+    } else if (action === 'follow-x') {
+      trackEvent('follow_x_click', { destination: 'x' });
     }
   });
 

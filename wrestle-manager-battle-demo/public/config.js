@@ -1,5 +1,5 @@
 
-window.WM_DEMO_CONFIG_OVERRIDES = {"productLinks":{"booth":"","dlsite":"","fanza":""}};
+window.WM_DEMO_CONFIG_OVERRIDES = {"productLinks":{"booth":"","dlsite":"","fanza":""},"promotionLinks":{"primaryUrl":"","primaryLabel":"","trialUrl":"","followXUrl":""}};
 (function () {
   'use strict';
 
@@ -10,6 +10,13 @@ window.WM_DEMO_CONFIG_OVERRIDES = {"productLinks":{"booth":"","dlsite":"","fanza
       dlsite: '',
       fanza: '',
     },
+    promotionLinks: {
+      // Set either link when it is ready. Empty values deliberately hide the corresponding CTA.
+      primaryUrl: '',
+      primaryLabel: '',
+      trialUrl: '',
+      followXUrl: '',
+    },
   };
 
   const overrides = window.WM_DEMO_CONFIG_OVERRIDES || {};
@@ -19,6 +26,10 @@ window.WM_DEMO_CONFIG_OVERRIDES = {"productLinks":{"booth":"","dlsite":"","fanza
     productLinks: Object.freeze({
       ...defaults.productLinks,
       ...(overrides.productLinks || {}),
+    }),
+    promotionLinks: Object.freeze({
+      ...defaults.promotionLinks,
+      ...(overrides.promotionLinks || {}),
     }),
   });
 })();
