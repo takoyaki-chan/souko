@@ -55,6 +55,17 @@
     },
   };
 
+  const ResultCrowd = {
+    play() {
+      try {
+        const audio = new Audio('./bgm/e02_crowd_v2.mp3');
+        audio.preload = 'auto';
+        audio.volume = 0.5;
+        audio.play().catch(() => {});
+      } catch (_) {}
+    },
+  };
+
   function fighterById(id) {
     return fighters.find((fighter) => fighter.id === Number(id)) || null;
   }
@@ -352,17 +363,31 @@
     return validProductUrl((config.promotionLinks || {})[name]);
   }
 
-  function endPrimaryCta() {
-    const trialUrl = promotionLink('trialUrl');
-    const primaryUrl = promotionLink('primaryUrl');
-    const primaryLabel = String((config.promotionLinks || {}).primaryLabel || '').trim();
-    if (trialUrl) {
-      return `<a class="demo-primary-cta" href="${escapeHtml(trialUrl)}" target="_blank" rel="noopener noreferrer" data-action="primary-cta" data-destination="trial">無料で団体経営を始める</a>`;
+  function resultDestinations() {
+    const freeUrl = promotionLink('trialUrl');
+    const products = Object.entries(config.productLinks || {})
+      .map(([store, value]) => [store, validProductUrl(value)])
+      .filter(([, url]) => url);
+    const rows = [];
+    if (freeUrl) rows.push(`<div><b>無料版</b><span>BOOTH / takoyakichan.booth.pm/items/8058404</span></div>`);
+    for (const [store] of products) {
+      const label = store === 'dlsite'
+        ? 'DLsite / RJ01592994（ページ内に体験版ダウンロードあり）'
+        : store === 'booth'
+          ? 'BOOTH / takoyakichan.booth.pm/items/8121734'
+          : `${store.toUpperCase()} / 製品版ページ`;
+      rows.push(`<div><b>製品版</b><span>${escapeHtml(label)}</span></div>`);
     }
-    if (primaryUrl) {
-      return `<a class="demo-primary-cta" href="${escapeHtml(primaryUrl)}" target="_blank" rel="noopener noreferrer" data-action="primary-cta" data-destination="product">${escapeHtml(primaryLabel || 'Wrestle-Manager本編を見る')}</a>`;
-    }
-    return '';
+    return rows.length ? `<div class="demo-result-destinations" aria-label="外部リンクの行き先">${rows.join('')}</div>` : '';
+  }
+
+  function resultProductOptions() {
+    const labels = { booth: 'BOOTHの製品版ページへ', dlsite: 'DLsiteの製品版ページへ', fanza: 'FANZAの製品版ページへ' };
+    return Object.entries(config.productLinks || {})
+      .map(([store, value]) => [store, validProductUrl(value)])
+      .filter(([, url]) => url)
+      .map(([store, url]) => `<a class="demo-dialog-link" href="${escapeHtml(url)}" target="_blank" rel="noopener noreferrer" data-action="product-link" data-store="${escapeHtml(store)}">${escapeHtml(labels[store] || '製品版ページへ')}</a>`)
+      .join('');
   }
 
   function finalHealth(fighter, side) {
@@ -410,38 +435,53 @@
     const winnerHealth = winner ? finalHealth(winner, winnerSide) : { ratio: 0 };
     const loserHealth = loser ? finalHealth(loser, loserSide) : { ratio: 0 };
     const followXUrl = promotionLink('followXUrl');
+    const freeUrl = promotionLink('trialUrl');
+    const productOptions = resultProductOptions();
     root.innerHTML = `<section class="demo-result" aria-labelledby="result-title">
       <div class="demo-result-hero">
-        <div class="demo-result-fighter winner"><img src="./image/full/full_${escapeHtml(winner ? winner.assetKey : player.assetKey)}.webp" alt="${escapeHtml(winner ? winner.name : player.name)}"></div>
-        ${loser ? `<div class="demo-result-fighter loser"><img src="./image/full/full_${escapeHtml(loser.assetKey)}.webp" alt="${escapeHtml(loser.name)}"></div>` : ''}
+        <div class="demo-result-fighter winner"><img src="./image/upper/upper_${escapeHtml(winner ? winner.assetKey : player.assetKey)}.webp" alt="${escapeHtml(winner ? winner.name : player.name)}"></div>
+        ${loser ? `<div class="demo-result-fighter loser"><img src="./image/upper/upper_${escapeHtml(loser.assetKey)}.webp" alt="${escapeHtml(loser.name)}"></div>` : ''}
         <div class="demo-result-title">
           <p>MATCH RESULT</p>
           <span>WINNER</span>
           <h1 id="result-title">${winner ? escapeHtml(winner.name) : '時間切れ引き分け'}</h1>
-          <strong>${winner ? winnerComment(winner) : '最後まで譲らない、拮抗した試合となりました。'}</strong>
+          <strong>決まり手　${escapeHtml(formatFinish(state.result.finType, state.result.finMove))}</strong>
+          <em>${winner ? winnerComment(winner) : '最後まで譲らない、拮抗した試合となりました。'}</em>
+          <small>ARENA CROWD CHEER / FINISH</small>
         </div>
       </div>
       <div class="demo-result-summary" aria-label="試合結果の詳細">
-        <div><small>決まり手</small><strong>${escapeHtml(formatFinish(state.result.finType, state.result.finMove))}</strong></div>
         <div><small>試合時間</small><strong>${formatJapaneseTime(state.result.turns)}</strong></div>
-        <div><small>${escapeHtml(winner ? winner.name : 'PLAYER')} 残り体力</small><strong>${winnerHealth.ratio}%</strong></div>
-        <div><small>${escapeHtml(loser ? loser.name : 'OPPONENT')} 残り体力</small><strong>${loserHealth.ratio}%</strong></div>
+        <div><small>勝者・残り体力</small><strong>${winnerHealth.ratio}%</strong></div>
+        <div class="demo-result-last-move"><small>最後に決まった技</small><strong>${escapeHtml(formatFinish(state.result.finType, state.result.finMove))}</strong></div>
       </div>
       <div class="demo-product-message">
-        <strong>このデモで遊べるのは、『Wrestle-Manager』の試合観戦部分です。</strong>
-        <span>本編では選手をスカウト・育成し、対戦カードを組み、団体を経営しながら、自分だけの女子プロレス史を作っていきます。</span>
+        <strong>この一戦の先に、あなたの団体がある。</strong>
+        <span>本編では選手をスカウト・育成し、対戦カードを組み、団体を運営しながら自分だけの女子プロレス史を作っていきます。</span>
       </div>
-      ${endPrimaryCta()}
+      <div class="demo-result-cta">
+        ${freeUrl ? '<button class="demo-primary-cta" type="button" data-action="open-free-confirm">無料版で団体を始める<small>BOOTH・無料版配布ページを開く</small></button>' : ''}
+        ${productOptions ? '<button class="demo-product-cta" type="button" data-action="open-product-options">製品版を見る<small>DLsite または BOOTH の製品版ページへ</small></button>' : ''}
+      </div>
+      ${resultDestinations()}
       <div class="demo-result-actions">
         <button type="button" data-action="same-rematch">同じ組み合わせでもう一度</button>
         <button type="button" data-action="new-rematch">別の対戦を選ぶ</button>
       </div>
-      ${productLinks()}
       <div class="demo-result-social">
         <button type="button" data-action="share-result">この試合結果をXで共有</button>
         ${followXUrl ? `<a href="${escapeHtml(followXUrl)}" target="_blank" rel="noopener noreferrer" data-action="follow-x">開発者をXでフォロー</a>` : ''}
       </div>
+      <div class="demo-result-dialog" hidden data-result-dialog="free" role="dialog" aria-modal="true" aria-labelledby="free-dialog-title">
+        <div class="demo-result-dialog-backdrop" data-action="close-result-dialog"></div>
+        <div class="demo-result-dialog-panel"><p>外部ページを開きます</p><h2 id="free-dialog-title">BOOTHの無料版配布ページへ進みますか？</h2><span>新しいタブで BOOTH を開きます。</span><div><a class="demo-dialog-link primary" href="${escapeHtml(freeUrl)}" target="_blank" rel="noopener noreferrer" data-action="primary-cta" data-destination="booth-free">BOOTHへ進む</a><button type="button" data-action="close-result-dialog">この画面に戻る</button></div></div>
+      </div>
+      <div class="demo-result-dialog" hidden data-result-dialog="products" role="dialog" aria-modal="true" aria-labelledby="product-dialog-title">
+        <div class="demo-result-dialog-backdrop" data-action="close-result-dialog"></div>
+        <div class="demo-result-dialog-panel"><p>製品版ページを選ぶ</p><h2 id="product-dialog-title">どちらの販売ページを開きますか？</h2><span>DLsiteのページには、体験版ダウンロードの案内があります。</span><div>${productOptions}<button type="button" data-action="close-result-dialog">この画面に戻る</button></div></div>
+      </div>
     </section>`;
+    ResultCrowd.play();
     focusApp();
   }
 
@@ -507,6 +547,15 @@
       renderSelection();
     } else if (action === 'product-link') {
       trackEvent('product_link_click', { store: target.dataset.store || 'unknown' });
+    } else if (action === 'open-free-confirm') {
+      const dialog = root.querySelector('[data-result-dialog="free"]');
+      if (dialog) dialog.hidden = false;
+    } else if (action === 'open-product-options') {
+      const dialog = root.querySelector('[data-result-dialog="products"]');
+      if (dialog) dialog.hidden = false;
+    } else if (action === 'close-result-dialog') {
+      const dialog = target.closest('.demo-result-dialog');
+      if (dialog) dialog.hidden = true;
     } else if (action === 'primary-cta') {
       trackEvent('primary_cta_click', { destination: target.dataset.destination || 'unknown' });
     } else if (action === 'share-result') {
